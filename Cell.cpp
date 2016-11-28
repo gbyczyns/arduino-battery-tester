@@ -69,14 +69,13 @@ void Cell::process() {
                 digitalWrite(dischargeControlPin, HIGH); // turn on the FET
                 outputHandler->beep(7000, 100);
             }
-        } else { // not enough good samples yet
-            if (batVoltage > NIMH_MIN_VOLTAGE) {
-                numSamplesAboveMin++;
-                numSamplesBelowMin = 0;
-            } else {
-                numSamplesBelowMin++;
-                numSamplesAboveMin = 0;
-            }
+        } else if (batVoltage > NIMH_MIN_VOLTAGE) {
+          // not enough good samples yet
+            numSamplesAboveMin++;
+            numSamplesBelowMin = 0;
+        } else {
+            numSamplesBelowMin++;
+            numSamplesAboveMin = 0;
         }
         if (numSamplesBelowMin > 3) {
             battStatus = NOT_INSTALLED;
