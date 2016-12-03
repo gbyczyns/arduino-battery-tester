@@ -11,6 +11,8 @@ OutputHandler::OutputHandler() {
     byte typeLiIon2[] = { 0b10000, 0b00000, 0b10000, 0b10000, 0b00000, 0b11000, 0b10100, 0b10100 };
     byte typeNiMH1[] = { 0b01001, 0b01101, 0b01011, 0b01001, 0b00000, 0b11011, 0b10101, 0b10001 };
     byte typeNiMH2[] = { 0b10000, 0b00000, 0b10000, 0b10000, 0b00000, 0b10010, 0b11110, 0b10010 };
+    byte miliOhm[] = { 0b11010, 0b10101, 0b10101, 0b00000, 0b01110, 0b10001, 0b01010, 0b11011 };
+
     lcd->begin(20, 4);
     print(0, 1, "    Tester ogniw");
     print(0, 2, "  Li-Ion/NiMH/NiCD");
