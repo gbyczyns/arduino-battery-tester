@@ -30,8 +30,7 @@ class Cell {
     unsigned int badSamplesCount = 0;    // number of samples read below minimum (to determine battery discharged)
     unsigned int cellVoltage;
 
-    void printVoltage(unsigned int);
-    void printCellSummary(unsigned int);
+    void printSummary();
 
     public:
     Cell(OutputHandler *, byte, byte, byte, byte);

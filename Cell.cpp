@@ -10,29 +10,38 @@ Cell::Cell(OutputHandler * outputHandler, byte rowNumber, byte pinVoltage, byte 
     doneAnimation = Animation::createDoneAnimation();
 }
 
-void Cell::printVoltage(unsigned int cellVoltage) {
+void Cell::printSummary() {
+    outputHandler->clearLine(rowNumber);
+
+    if (cellStatus == CellStatus::NOT_INSTALLED && charge == 0) {
+        outputHandler->print(2, rowNumber, "  <brak ogniwa>   ");
+        return;
+    }
+
+    // print voltage
     char buff[5];
     sprintf(buff, "%4u", cellVoltage >= ABSOLUTE_MIN_VOLTAGE ? cellVoltage : 0);
     outputHandler->print(2, rowNumber, buff);
     outputHandler->print(6, rowNumber, "mV" );
-}
 
-void Cell::printCellSummary(unsigned int cellVoltage) {
-    printVoltage(cellVoltage);
-    char buff[5];
-    sprintf(buff, "%4u", charge / 1000);
-    outputHandler->print(9, rowNumber, buff);
-    outputHandler->print(13, rowNumber, "mAh" );
-    outputHandler->printCustomChar(17, rowNumber, cellStatus == CellStatus::DISCHARGING ? dischargingAnimation->getNextFrame() : doneAnimation->getNextFrame());
-    outputHandler->printCustomChar(18, rowNumber, cellType == CellType::LI_ION ? 4 : 6);
-    outputHandler->printCustomChar(19, rowNumber, cellType == CellType::LI_ION ? 5 : 7);
+    if (cellStatus == CellStatus::DETECTING_TYPE) {
+        outputHandler->print(9, rowNumber, " wykrywanie");
+    } else {
+        char buff[5];
+        sprintf(buff, "%4u", charge / 1000);
+        outputHandler->print(9, rowNumber, buff);
+        outputHandler->print(13, rowNumber, "mAh" );
+        outputHandler->printCustomChar(17, rowNumber, cellStatus == CellStatus::DISCHARGING ? dischargingAnimation->getNextFrame() : doneAnimation->getNextFrame());
+        outputHandler->printCustomChar(18, rowNumber, cellType == CellType::LI_ION ? 4 : 6);
+        outputHandler->printCustomChar(19, rowNumber, cellType == CellType::LI_ION ? 5 : 7);
+    }
 }
 
 void Cell::process() {
     if (cellStatus != CellStatus::DISCHARGING) {
         digitalWrite(dischargeControlPin, LOW); // turn off the load
     }
-    outputHandler->clearLine(rowNumber);
+
     cellVoltage = analogRead(pinVoltage) / 1023.0 * REF_VOLTAGE;
     if (cellStatus == CellStatus::DISCHARGING) {
         // Calculate the time duration between the last reading (in milliseconds)
@@ -55,12 +64,9 @@ void Cell::process() {
         } else {
             badSamplesCount++;
         }
-        printCellSummary(cellVoltage);
     } else if (cellStatus == CellStatus::MEASURING_RESISTANCE) {
         
     } else if (cellStatus == CellStatus::DETECTING_TYPE) {
-        printVoltage(cellVoltage);
-        outputHandler->print(9, rowNumber, " wykrywanie");
         if (goodSamplesCount > 3) {
             if ((cellVoltage >= LIION_MIN_VOLTAGE && cellVoltage <= LIION_MAX_VOLTAGE) || (cellVoltage >= NIMH_MIN_VOLTAGE && cellVoltage <= NIMH_MAX_VOLTAGE)) {
                 // Initialize variables and start discharge
@@ -86,12 +92,6 @@ void Cell::process() {
             cellStatus = CellStatus::NOT_INSTALLED;
         }
     } else if (cellStatus == CellStatus::NOT_INSTALLED) {
-        if (charge > 0) {
-            // wcześniej było ładowane jakieś ogniwo, ale zostało wyjęte, więc pokazujemy jego statystyki
-            printCellSummary(cellVoltage);
-        } else {
-            outputHandler->print(2, rowNumber, "  <brak ogniwa>   ");
-        }
         if (cellVoltage >= NIMH_MIN_VOLTAGE) {
             // This condition indicates that a battery has been installed, change status to Detecting
             cellStatus = CellStatus::DETECTING_TYPE;
@@ -101,7 +101,8 @@ void Cell::process() {
             // napięcie spadło = ogniwo zostało wyjęte, więc umożliwiamy przetestowanie kolejnego
             cellStatus = CellStatus::NOT_INSTALLED;
         }
-        printCellSummary(cellVoltage);
     }
+
+    printSummary();
 }
 
