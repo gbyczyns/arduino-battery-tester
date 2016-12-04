@@ -16,6 +16,6 @@ void loop() {
         cell2.process();
         cell3.process();
         cell4.process();
-        delay(1000);
+        delay(100);
     }
 }

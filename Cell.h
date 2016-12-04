@@ -11,7 +11,7 @@
 #define LOAD_RESISTANCE 3.3d
 #define REF_VOLTAGE 5000
 
-enum class CellStatus {NOT_INSTALLED, DETECTING_TYPE, MEASURING_RESISTANCE, DISCHARGING, DONE};
+enum class CellStatus {DETECTING_TYPE, MEASURING_RESISTANCE, DISCHARGING, DONE};
 enum class CellType {LI_ION, NI_MH};
 
 class Cell {
@@ -26,8 +26,8 @@ class Cell {
     const byte dischargeControlPin;      // Output Pin that controlls the load for this battery
     unsigned long charge = 0;            // Total microamp hours for this battery
     unsigned long prevTime = 0;          // Previous time reading (in milliseconds)
-    unsigned int goodSamplesCount = 0;   // number of good voltage readings (to determine battery installed)
-    unsigned int badSamplesCount = 0;    // number of samples read below minimum (to determine battery discharged)
+    unsigned long lastGoodSample;
+    unsigned long lastBadSample;
     unsigned int cellVoltage;
 
     void printSummary();
