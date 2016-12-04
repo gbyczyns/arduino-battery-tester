@@ -54,6 +54,10 @@ void Cell::process() {
     } else if (cellStatus == CellStatus::DONE) {
         if (cellVoltage < ABSOLUTE_MIN_VOLTAGE) {
             // napięcie spadło = ogniwo zostało wyjęte, więc umożliwiamy przetestowanie kolejnego
+            cellStatus = CellStatus::NOT_INSTALLED;
+        }
+    } else if (cellStatus == CellStatus::NOT_INSTALLED) {
+        if (cellVoltage > ABSOLUTE_MIN_VOLTAGE) {
             cellStatus = CellStatus::DETECTING_TYPE;
         }
     }

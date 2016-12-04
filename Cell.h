@@ -10,7 +10,7 @@
 #define REF_VOLTAGE 5000
 #define SPEAKER_PIN 12
 
-enum class CellStatus {DETECTING_TYPE, DISCHARGING, DONE};
+enum class CellStatus {NOT_INSTALLED, DETECTING_TYPE, DISCHARGING, DONE};
 enum class CellType {LI_ION, NI_MH};
 
 class Cell {
