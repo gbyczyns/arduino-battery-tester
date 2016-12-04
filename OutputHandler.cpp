@@ -29,25 +29,24 @@ OutputHandler::OutputHandler() {
 }
 
 void OutputHandler::printSummary(Cell * cell) {
-    print(0, cell->getRowNumber(), "                    ");
-
     // print voltage
     char buff[5];
     sprintf(buff, "%4u", cell->getCellVoltage() >= ABSOLUTE_MIN_VOLTAGE ? cell->getCellVoltage() : 0);
     print(0, cell->getRowNumber(), buff);
-    print(4, cell->getRowNumber(), "mV" );
+    print(4, cell->getRowNumber(), "mV ");
 
     if (cell->getCellStatus() == CellStatus::DETECTING_TYPE) {
         print(7, cell->getRowNumber(), "brak ogniwa");
     } else {
         sprintf(buff, "%4u", cell->getCharge() / 1000);
         print(7, cell->getRowNumber(), buff);
-        print(11, cell->getRowNumber(), "mAh" );
+        print(11, cell->getRowNumber(), "mAh ");
         if (internalResistanceRendered) {
             sprintf(buff, "%4u", cell->getInternalResistance());
             print(15, cell->getRowNumber(), buff);
             printCustomChar(19, cell->getRowNumber(), 3);
         } else {
+            print(15, cell->getRowNumber(), "  ");
             printCustomChar(17, cell->getRowNumber(), cell->getCellStatus() == CellStatus::DISCHARGING ? dischargingAnimation->getFrame() : doneAnimation->getFrame());
             printCustomChar(18, cell->getRowNumber(), cell->getCellType() == CellType::LI_ION ? 4 : 6);
             printCustomChar(19, cell->getRowNumber(), cell->getCellType() == CellType::LI_ION ? 5 : 7);
