@@ -1,35 +1,10 @@
 #include "Arduino.h"
 #include "Cell.h"
 
-Cell::Cell(OutputHandler * outputHandler, byte rowNumber, byte pinVoltage, byte pinFetVoltage, byte dischargeControlPin) :
-        rowNumber(rowNumber), outputHandler(outputHandler), pinVoltage(pinVoltage), pinFetVoltage(pinFetVoltage), dischargeControlPin(dischargeControlPin) {
+Cell::Cell(byte rowNumber, byte pinVoltage, byte pinFetVoltage, byte dischargeControlPin) : rowNumber(rowNumber), pinVoltage(pinVoltage), pinFetVoltage(pinFetVoltage), dischargeControlPin(dischargeControlPin) {
     pinMode(pinVoltage, INPUT);
     pinMode(pinFetVoltage, INPUT);
     pinMode(dischargeControlPin, OUTPUT);
-    dischargingAnimation = Animation::createDischargingAnimation();
-    doneAnimation = Animation::createDoneAnimation();
-}
-
-void Cell::printSummary() {
-    outputHandler->clearLine(rowNumber);
-
-    // print voltage
-    char buff[5];
-    sprintf(buff, "%4u", cellVoltage >= ABSOLUTE_MIN_VOLTAGE ? cellVoltage : 0);
-    outputHandler->print(2, rowNumber, buff);
-    outputHandler->print(6, rowNumber, "mV" );
-
-    if (cellStatus == CellStatus::DETECTING_TYPE) {
-        outputHandler->print(9, rowNumber, "brak ogniwa");
-    } else {
-        char buff[5];
-        sprintf(buff, "%4u", charge / 1000);
-        outputHandler->print(9, rowNumber, buff);
-        outputHandler->print(13, rowNumber, "mAh" );
-        outputHandler->printCustomChar(17, rowNumber, cellStatus == CellStatus::DISCHARGING ? dischargingAnimation->getNextFrame() : doneAnimation->getNextFrame());
-        outputHandler->printCustomChar(18, rowNumber, cellType == CellType::LI_ION ? 4 : 6);
-        outputHandler->printCustomChar(19, rowNumber, cellType == CellType::LI_ION ? 5 : 7);
-    }
 }
 
 void Cell::process() {
@@ -37,7 +12,7 @@ void Cell::process() {
         digitalWrite(dischargeControlPin, LOW); // turn off the load
     }
 
-    cellVoltage = analogRead(pinVoltage) / 1023.0 * REF_VOLTAGE;
+    cellVoltage = readCellVoltage();
     if (cellStatus == CellStatus::DISCHARGING) {
         // Calculate the time duration between the last reading (in milliseconds)
         unsigned long currentTime = millis();
@@ -54,10 +29,8 @@ void Cell::process() {
             lastGoodSample = millis();
         } else if (millis() - lastGoodSample > 3000) { // jeśli ostatni dobry pomiar był wcześniej niż 3000 ms temu, kończymy rozładowywanie
             cellStatus = CellStatus::DONE;
-            outputHandler->beep(1800, 1000);
+            tone(SPEAKER_PIN, 1800, 1000);
         }
-    } else if (cellStatus == CellStatus::MEASURING_RESISTANCE) {
-        
     } else if (cellStatus == CellStatus::DETECTING_TYPE) {
         if (cellVoltage >= LIION_MIN_VOLTAGE && cellVoltage <= LIION_MAX_VOLTAGE) {
             cellType = CellType::LI_ION;
@@ -68,18 +41,48 @@ void Cell::process() {
         }
 
         if (millis() - lastBadSample > 500) { // jeśli ostatni błędny pomiar był wcześniej niż 500 ms temu, rozpoczynamy rozładowywanie
+            tone(SPEAKER_PIN, 7000, 100);
+            digitalWrite(dischargeControlPin, HIGH); // turn on the FET
+            delay(100);
+            unsigned int voltageAfterApplyingLoad = readCellVoltage();
+            internalResistance = LOAD_RESISTANCE * 1000.0 * (cellVoltage - voltageAfterApplyingLoad) / voltageAfterApplyingLoad;
+            
             cellStatus = CellStatus::DISCHARGING;
             charge = 0;
             prevTime = millis();
-            digitalWrite(dischargeControlPin, HIGH); // turn on the FET
-            outputHandler->beep(7000, 100);
         } 
     } else if (cellStatus == CellStatus::DONE) {
         if ((cellVoltage > ABSOLUTE_MIN_VOLTAGE) ^ (charge == 0)) {
             cellStatus = CellStatus::DETECTING_TYPE;
         }
     }
+}
 
-    printSummary();
+unsigned int Cell::readCellVoltage() {
+    return analogRead(pinVoltage) / 1023.0 * REF_VOLTAGE;
+}
+
+CellStatus Cell::getCellStatus() {
+    return cellStatus;
+}
+
+CellType Cell::getCellType() {
+    return cellType;
+}
+
+byte Cell::getRowNumber() {
+    return rowNumber;
+}
+
+unsigned long Cell::getCharge() {
+    return charge;
+}
+
+unsigned int Cell::getCellVoltage() {
+    return cellVoltage;
+}
+
+unsigned int Cell::getInternalResistance() {
+    return internalResistance;
 }
 

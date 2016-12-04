@@ -1,20 +1,28 @@
 #ifndef OUTPUTHANDLER_H
 #define OUTPUTHANDLER_H
 #include <LiquidCrystal.h>
-#define SPEAKER_PIN 12
+#include "Cell.h"
+#include "Animation.h"
 
 class OutputHandler {
     LiquidCrystal * lcd;
-    void setCursor(byte, byte);
+    Animation * dischargingAnimation = Animation::createDischargingAnimation();
+    Animation * doneAnimation = Animation::createDoneAnimation();
+    unsigned long lastAnimationFrameIncrement;
 
-    public:
-    OutputHandler();
+    unsigned long lastSummaryCycle;
+    boolean internalResistanceRendered = false;
+
+    void setCursor(byte, byte);
     void print(byte, byte, const char[]);
     void print(byte, byte, int);
     void printCustomChar(byte, byte, byte);
-    void printHeader();
     void clearLine(byte);
-    void beep(unsigned int, unsigned int);
+
+    public:
+    OutputHandler();
+    void printSummary(Cell * cell);
+    void allDone();
 };
 
 #endif

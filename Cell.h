@@ -1,7 +1,5 @@
 #ifndef CELL_H
 #define CELL_H
-#include "OutputHandler.h"
-#include "Animation.h"
 
 #define LIION_MAX_VOLTAGE 4500
 #define LIION_MIN_VOLTAGE 2600
@@ -10,14 +8,12 @@
 #define ABSOLUTE_MIN_VOLTAGE 200
 #define LOAD_RESISTANCE 3.3d
 #define REF_VOLTAGE 5000
+#define SPEAKER_PIN 12
 
-enum class CellStatus {DETECTING_TYPE, MEASURING_RESISTANCE, DISCHARGING, DONE};
+enum class CellStatus {DETECTING_TYPE, DISCHARGING, DONE};
 enum class CellType {LI_ION, NI_MH};
 
 class Cell {
-    OutputHandler * outputHandler;
-    Animation * dischargingAnimation;
-    Animation * doneAnimation;
     CellStatus cellStatus = CellStatus::DETECTING_TYPE;
     CellType cellType = CellType::LI_ION;
     const byte rowNumber;
@@ -29,12 +25,20 @@ class Cell {
     unsigned long lastGoodSample;
     unsigned long lastBadSample;
     unsigned int cellVoltage;
+    unsigned int internalResistance;
 
-    void printSummary();
+    unsigned int readCellVoltage();
 
     public:
-    Cell(OutputHandler *, byte, byte, byte, byte);
+    Cell(byte, byte, byte, byte);
     void process();
+
+    CellStatus getCellStatus();
+    CellType getCellType();
+    byte getRowNumber();
+    unsigned long getCharge();
+    unsigned int getCellVoltage();
+    unsigned int getInternalResistance();
 };
 
 #endif

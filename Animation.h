@@ -8,7 +8,8 @@ class Animation {
 
     public:
     Animation(byte, byte *);
-    byte getNextFrame();
+    byte getFrame() ;
+    void advanceToNextFrame();
     static Animation* createDischargingAnimation();
     static Animation* createDoneAnimation();
 };
