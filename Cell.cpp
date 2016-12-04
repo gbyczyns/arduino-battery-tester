@@ -27,7 +27,7 @@ void Cell::process() {
             // Must divide by (60*60*1000) to convert duration in micro seconds to hours. But doing this now would cause a loss of precision, hence division by 3600 which will result in microamp hours to be summed.
             charge += (loadCurrent * duration) / 3600;
             lastGoodSample = millis();
-        } else if (millis() - lastGoodSample > 3000) { // jeśli ostatni dobry pomiar był wcześniej niż 3000 ms temu, kończymy rozładowywanie
+        } else if (millis() - lastGoodSample > 1500) { // jeśli ostatni dobry pomiar był wcześniej niż 1500 ms temu, kończymy rozładowywanie
             cellStatus = CellStatus::DONE;
             tone(SPEAKER_PIN, 1800, 1000);
         }
@@ -40,19 +40,20 @@ void Cell::process() {
             lastBadSample = millis();
         }
 
-        if (millis() - lastBadSample > 500) { // jeśli ostatni błędny pomiar był wcześniej niż 500 ms temu, rozpoczynamy rozładowywanie
-            tone(SPEAKER_PIN, 7000, 100);
+        if (millis() - lastBadSample > 1000) { // jeśli ostatni błędny pomiar był wcześniej niż 1000 ms temu, rozpoczynamy rozładowywanie
             digitalWrite(dischargeControlPin, HIGH); // turn on the FET
-            delay(100);
+            delay(500);
             unsigned int voltageAfterApplyingLoad = readCellVoltage();
             internalResistance = LOAD_RESISTANCE * 1000.0 * (cellVoltage - voltageAfterApplyingLoad) / voltageAfterApplyingLoad;
-            
+
+            tone(SPEAKER_PIN, 7000, 100);
             cellStatus = CellStatus::DISCHARGING;
             charge = 0;
             prevTime = millis();
         } 
     } else if (cellStatus == CellStatus::DONE) {
-        if ((cellVoltage > ABSOLUTE_MIN_VOLTAGE) ^ (charge == 0)) {
+        if (cellVoltage < ABSOLUTE_MIN_VOLTAGE) {
+            // napięcie spadło = ogniwo zostało wyjęte, więc umożliwiamy przetestowanie kolejnego
             cellStatus = CellStatus::DETECTING_TYPE;
         }
     }
