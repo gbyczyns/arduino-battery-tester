@@ -36,16 +36,28 @@ void OutputHandler::printSummary(Cell * cell) {
     print(4, cell->getRowNumber(), "mV ");
 
     if (cell->getCellStatus() == CellStatus::DETECTING_TYPE) {
-        print(7, cell->getRowNumber(), "brak ogniwa");
+        print(7, cell->getRowNumber(), "brak ogniwa  ");
     } else {
-        sprintf(buff, "%4u", cell->getCharge() / 1000);
-        print(7, cell->getRowNumber(), buff);
-        print(11, cell->getRowNumber(), "mAh ");
-        if (internalResistanceRendered) {
+        unsigned long totalSeconds = cell->getElapsedDischargeTime() / 1000;
+        if (internalResistanceRendered || (totalSeconds < 10 && cell->getCellStatus() == CellStatus::DISCHARGING)) {
+            unsigned int minutes = totalSeconds / 60;
+            unsigned int seconds = totalSeconds % 60;
+            minutes = minutes > 999 ? 999 : minutes;
+            sprintf(buff, "%3i", minutes);
+            print(7, cell->getRowNumber(), buff);
+            print(10, cell->getRowNumber(), ":");
+            sprintf(buff, "%02i", seconds);
+            print(11, cell->getRowNumber(), buff);
+            print(13, cell->getRowNumber(), "s ");
+
             sprintf(buff, "%4u", cell->getInternalResistance());
             print(15, cell->getRowNumber(), buff);
             printCustomChar(19, cell->getRowNumber(), 3);
         } else {
+            sprintf(buff, "%4u", cell->getCharge() / 1000);
+            print(7, cell->getRowNumber(), buff);
+            print(11, cell->getRowNumber(), "mAh ");
+
             print(15, cell->getRowNumber(), "  ");
             printCustomChar(17, cell->getRowNumber(), cell->getCellStatus() == CellStatus::DISCHARGING ? dischargingAnimation->getFrame() : doneAnimation->getFrame());
             printCustomChar(18, cell->getRowNumber(), cell->getCellType() == CellType::LI_ION ? 4 : 6);
@@ -61,7 +73,7 @@ void OutputHandler::allDone() {
         doneAnimation->advanceToNextFrame();
         lastAnimationFrameIncrement = currentTime;
     }
-    if (currentTime - lastSummaryCycle > 2000) {
+    if (currentTime - lastSummaryCycle > 5000) {
         internalResistanceRendered = !internalResistanceRendered;
         lastSummaryCycle = currentTime;
     }

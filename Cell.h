@@ -22,6 +22,8 @@ class Cell {
     const byte dischargeControlPin;      // Output Pin that controlls the load for this battery
     unsigned long charge = 0;            // Total microamp hours for this battery
     unsigned long prevTime = 0;          // Previous time reading (in milliseconds)
+    unsigned long dischargeStartTime;
+    unsigned long elapsedDischargeTime;
     unsigned long lastGoodSample;
     unsigned long lastBadSample;
     unsigned int cellVoltage;
@@ -37,6 +39,7 @@ class Cell {
     CellType getCellType();
     byte getRowNumber();
     unsigned long getCharge();
+    unsigned long getElapsedDischargeTime();
     unsigned int getCellVoltage();
     unsigned int getInternalResistance();
 };

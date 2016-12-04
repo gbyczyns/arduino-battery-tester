@@ -18,6 +18,7 @@ void Cell::process() {
         unsigned long currentTime = millis();
         unsigned long duration = currentTime - prevTime;
         prevTime = currentTime;
+        elapsedDischargeTime = currentTime - dischargeStartTime;
 
         unsigned int lowerThreshold = (cellType == CellType::LI_ION ? LIION_MIN_VOLTAGE : NIMH_MIN_VOLTAGE);
         if (cellVoltage >= lowerThreshold) {
@@ -49,6 +50,7 @@ void Cell::process() {
             tone(SPEAKER_PIN, 7000, 100);
             cellStatus = CellStatus::DISCHARGING;
             charge = 0;
+            dischargeStartTime = millis();
             prevTime = millis();
         } 
     } else if (cellStatus == CellStatus::DONE) {
@@ -81,6 +83,10 @@ byte Cell::getRowNumber() {
 
 unsigned long Cell::getCharge() {
     return charge;
+}
+
+unsigned long Cell::getElapsedDischargeTime() {
+    return elapsedDischargeTime;
 }
 
 unsigned int Cell::getCellVoltage() {
