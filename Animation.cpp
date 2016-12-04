@@ -12,8 +12,8 @@ void Animation::advanceToNextFrame() {
 }
 
 Animation* Animation::createDischargingAnimation() {
-    byte * characters = new byte[4]{0, 1, 2};
-    Animation * animation = new Animation(3, characters);
+    byte * characters = new byte[4]{0, 1, 2, 2};
+    Animation * animation = new Animation(4, characters);
     return animation;
 }
 
