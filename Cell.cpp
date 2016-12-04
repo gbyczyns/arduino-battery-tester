@@ -58,38 +58,32 @@ void Cell::process() {
         unsigned int lowerThreshold = (cellType == CellType::LI_ION ? LIION_MIN_VOLTAGE : NIMH_MIN_VOLTAGE);
         if (cellVoltage >= lowerThreshold) {
             badSamplesCount = 0; // reset counter since this reading was good
-        } else if (badSamplesCount >= 3 ) {
+        } else if (++badSamplesCount > 3 ) {
             cellStatus = CellStatus::DONE;
             outputHandler->beep(1800, 1000);
-        } else {
-            badSamplesCount++;
         }
     } else if (cellStatus == CellStatus::MEASURING_RESISTANCE) {
         
     } else if (cellStatus == CellStatus::DETECTING_TYPE) {
-        if (goodSamplesCount > 3) {
-            if ((cellVoltage >= LIION_MIN_VOLTAGE && cellVoltage <= LIION_MAX_VOLTAGE) || (cellVoltage >= NIMH_MIN_VOLTAGE && cellVoltage <= NIMH_MAX_VOLTAGE)) {
-                // Initialize variables and start discharge
-                cellType = cellVoltage >= LIION_MIN_VOLTAGE ? CellType::LI_ION : CellType::NI_MH;
-                cellStatus = CellStatus::DISCHARGING;
-                charge = 0;
-                prevTime = millis();
-                digitalWrite(dischargeControlPin, HIGH); // turn on the FET
-                outputHandler->beep(7000, 100);
-            } else {
-                cellStatus = CellStatus::NOT_INSTALLED;
-                goodSamplesCount = 0;
-            }
-        } else if (cellVoltage > NIMH_MIN_VOLTAGE) {
-          // not enough good samples yet
+        if (cellVoltage >= LIION_MIN_VOLTAGE && cellVoltage <= LIION_MAX_VOLTAGE) {
+            cellType = CellType::LI_ION;
             goodSamplesCount++;
-            badSamplesCount = 0;
+        } else if (cellVoltage >= NIMH_MIN_VOLTAGE && cellVoltage <= NIMH_MAX_VOLTAGE) {
+            cellType = CellType::NI_MH;
+            goodSamplesCount++;
         } else {
             badSamplesCount++;
             goodSamplesCount = 0;
         }
+
         if (badSamplesCount > 3) {
             cellStatus = CellStatus::NOT_INSTALLED;
+        } else if (goodSamplesCount > 3) {
+            cellStatus = CellStatus::DISCHARGING;
+            charge = 0;
+            prevTime = millis();
+            digitalWrite(dischargeControlPin, HIGH); // turn on the FET
+            outputHandler->beep(7000, 100);
         }
     } else if (cellStatus == CellStatus::NOT_INSTALLED) {
         if (cellVoltage >= NIMH_MIN_VOLTAGE) {
